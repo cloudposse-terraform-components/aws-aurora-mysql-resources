@@ -1,4 +1,9 @@
-output "mock" {
-  description = "Mock output example for the Cloud Posse Terraform component template"
-  value       = local.enabled ? "hello ${basename(abspath(path.module))}" : ""
+output "additional_users" {
+  value       = { for k, v in var.additional_users : k => module.additional_users[k] }
+  description = "Additional DB users created"
+}
+
+output "additional_grants" {
+  value       = keys(module.additional_grants)
+  description = "Additional DB users created"
 }
