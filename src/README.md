@@ -7,12 +7,10 @@ tags:
 
 # Component: `aurora-mysql-resources`
 
-This component is responsible for provisioning Aurora MySQL resources: additional databases, users, permissions, grants,
-etc.
+This component provisions Aurora MySQL resources: additional databases, users, permissions, and grants.
 
-NOTE: Creating additional users (including read-only users) and databases requires Spacelift, since that action to be
-done via the mysql provider, and by default only the automation account is whitelisted by the Aurora cluster.
-
+NOTE: Creating additional users (including read-only users) and databases requires Spacelift, since that action must be
+done via the MySQL provider, and by default only the automation account is whitelisted by the Aurora cluster.
 ## Usage
 
 **Stack Level**: Regional
@@ -61,8 +59,8 @@ components:
                 schema: null
 ```
 
-<!-- prettier-ignore-start -->
-<!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+
+<!-- markdownlint-disable -->
 ## Requirements
 
 | Name | Version |
@@ -136,12 +134,17 @@ components:
 |------|-------------|
 | <a name="output_additional_grants"></a> [additional\_grants](#output\_additional\_grants) | Additional DB users created |
 | <a name="output_additional_users"></a> [additional\_users](#output\_additional\_users) | Additional DB users created |
-<!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
-<!-- prettier-ignore-end -->
+<!-- markdownlint-restore -->
+
+
 
 ## References
 
-- [cloudposse/terraform-aws-components](https://github.com/cloudposse/terraform-aws-components/tree/main/modules/aurora-mysql-resources) -
-  Cloud Posse's upstream component
+
+- [cloudposse-terraform-components](https://github.com/orgs/cloudposse-terraform-components/repositories) - Cloud Posse's upstream component
+
+
+
 
 [<img src="https://cloudposse.com/logo-300x69.svg" height="32" align="right"/>](https://cpco.io/homepage?utm_source=github&utm_medium=readme&utm_campaign=cloudposse-terraform-components/aws-aurora-mysql-resources&utm_content=)
+
