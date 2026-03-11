@@ -2,7 +2,7 @@ locals {
   enabled = module.this.enabled
 
   db_user     = length(var.db_user) > 0 ? var.db_user : var.service_name
-  db_password = length(var.db_password) > 0 ? var.db_password : join("", random_password.db_password.*.result)
+  db_password = length(var.db_password) > 0 ? var.db_password : join("", random_password.db_password[*].result)
 
   save_password_in_ssm = local.enabled && var.save_password_in_ssm
 
@@ -55,8 +55,8 @@ resource "mysql_user" "default" {
 # Grant the user full access to this specific database
 resource "mysql_grant" "default" {
   count    = local.enabled ? length(var.grants) : 0
-  user     = join("", mysql_user.default.*.user)
-  host     = join("", mysql_user.default.*.host)
+  user     = join("", mysql_user.default[*].user)
+  host     = join("", mysql_user.default[*].host)
   database = split(".", var.grants[count.index].db)[0]
   # We would like to use
   # table = try(split(".", var.grants[count.index].db)[1], "*")
