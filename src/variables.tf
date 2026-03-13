@@ -29,12 +29,6 @@ variable "ssm_password_source" {
     EOT
 }
 
-variable "mysql_db_name" {
-  type        = string
-  description = "Database name (default is not to create a database"
-  default     = ""
-}
-
 variable "mysql_cluster_enabled" {
   type        = string
   default     = true
