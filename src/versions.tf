@@ -13,5 +13,9 @@ terraform {
       source  = "petoju/mysql"
       version = ">= 3.0.22"
     }
+    utils = {
+      source  = "cloudposse/utils"
+      version = ">= 2.0.0, < 3.0.0"
+    }
   }
 }
