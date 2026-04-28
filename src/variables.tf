@@ -7,6 +7,7 @@ variable "mysql_admin_password" {
   type        = string
   description = "MySQL password for the admin user. If not provided, the password will be pulled from SSM"
   default     = ""
+  sensitive   = true
 }
 
 variable "aurora_mysql_component_name" {
