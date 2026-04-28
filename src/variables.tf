@@ -3,6 +3,12 @@ variable "region" {
   description = "AWS Region"
 }
 
+variable "mysql_admin_password" {
+  type        = string
+  description = "MySQL password for the admin user. If not provided, the password will be pulled from SSM"
+  default     = ""
+}
+
 variable "aurora_mysql_component_name" {
   type        = string
   description = "Aurora MySQL component name to read the remote state from"
