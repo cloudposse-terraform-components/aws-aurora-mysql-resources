@@ -43,15 +43,26 @@ usage: |-
             - aurora-mysql-resources/defaults
         vars:
           aurora_mysql_component_name: aurora-mysql/dev
+          # Roles (MySQL 8.0+) are GRANT targets that users can be granted membership in
+          additional_roles:
+            - reader
           additional_users:
+            # Password-authenticated user (password generated and stored in SSM)
             example:
               db_user: example
               db_password: ""
               grants:
-                - grant: ["ALL"]
+                - grant: ["ALL_APP"]
                   db: example
-                  object_type: database
-                  schema: null
+            # IAM-authenticated user (no password), granted membership in the `reader` role
+            reporting:
+              db_user: reporting
+              auth_plugin: AWSAuthenticationPlugin
+              role_memberships:
+                - reader
+              grants:
+                - grant: ["SELECT"]
+                  db: example
   ```
 references:
   - name: cloudposse-terraform-components

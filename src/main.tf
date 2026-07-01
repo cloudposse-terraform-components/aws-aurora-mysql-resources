@@ -27,19 +27,29 @@ resource "mysql_database" "additional" {
   name = each.key
 }
 
+# Create MySQL roles before users so `additional_users[*].role_memberships` can reference them.
+resource "mysql_role" "additional" {
+  for_each = local.mysql_enabled ? var.additional_roles : []
+
+  name = each.key
+}
+
 module "additional_users" {
   for_each = var.additional_users
   source   = "./modules/mysql-user"
 
-  service_name    = each.key
-  db_user         = each.value.db_user
-  db_password     = each.value.db_password
-  grants          = each.value.grants
-  ssm_path_prefix = local.ssm_path_prefix
-  kms_key_id      = local.kms_key_arn
+  service_name     = each.key
+  db_user          = each.value.db_user
+  db_password      = each.value.db_password
+  auth_plugin      = each.value.auth_plugin
+  role_memberships = each.value.role_memberships
+  grants           = each.value.grants
+  ssm_path_prefix  = local.ssm_path_prefix
+  kms_key_id       = local.kms_key_arn
 
   depends_on = [
     mysql_database.additional,
+    mysql_role.additional,
   ]
 
   context = module.this.context

@@ -52,17 +52,32 @@ variable "additional_users" {
   # map key is service name
   type = map(object({
     db_user : string
-    db_password : string
-    grants : list(object({
+    db_password : optional(string, "")
+    auth_plugin : optional(string, "")
+    role_memberships : optional(list(string), [])
+    grants : optional(list(object({
       grant : list(string)
       db : string
-    }))
+    })), [])
   }))
   default     = {}
   description = <<-EOT
     Create additional database user for a service, specifying username, grants, and optional password.
     If no password is specified, one will be generated. Username and password will be stored in
     SSM parameter store under the service's key.
+    Set `auth_plugin` (e.g. `AWSAuthenticationPlugin` for RDS IAM authentication) to create a user
+    that authenticates via a MySQL authentication plugin instead of a password; no password is
+    generated or stored for such users. `role_memberships` grants the listed MySQL roles (see
+    `var.additional_roles`) to the user.
+    EOT
+}
+
+variable "additional_roles" {
+  type        = set(string)
+  default     = []
+  description = <<-EOT
+    MySQL roles to create. Roles are GRANT targets that can be granted to users via
+    `additional_users[*].role_memberships`. Requires MySQL 8.0+.
     EOT
 }
 
