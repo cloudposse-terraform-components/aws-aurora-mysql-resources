@@ -70,6 +70,14 @@ variable "additional_users" {
     generated or stored for such users. `role_memberships` grants the listed MySQL roles (see
     `var.additional_roles`) to the user.
     EOT
+
+  validation {
+    condition = alltrue([
+      for user in values(var.additional_users) :
+      !(trimspace(user.auth_plugin) != "" && trimspace(user.db_password) != "")
+    ])
+    error_message = "additional_users[*] cannot set both `db_password` and `auth_plugin`; auth-plugin users do not use a password."
+  }
 }
 
 variable "additional_roles" {

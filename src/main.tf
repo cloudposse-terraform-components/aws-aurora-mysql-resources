@@ -35,7 +35,7 @@ resource "mysql_role" "additional" {
 }
 
 module "additional_users" {
-  for_each = var.additional_users
+  for_each = local.mysql_enabled ? var.additional_users : {}
   source   = "./modules/mysql-user"
 
   service_name     = each.key
