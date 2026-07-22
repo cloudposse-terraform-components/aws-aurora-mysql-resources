@@ -48,15 +48,26 @@ components:
           - aurora-mysql-resources/defaults
       vars:
         aurora_mysql_component_name: aurora-mysql/dev
+        # Roles (MySQL 8.0+) are GRANT targets that users can be granted membership in
+        additional_roles:
+          - reader
         additional_users:
+          # Password-authenticated user (password generated and stored in SSM)
           example:
             db_user: example
             db_password: ""
             grants:
-              - grant: ["ALL"]
+              - grant: ["ALL_APP"]
                 db: example
-                object_type: database
-                schema: null
+          # IAM-authenticated user (no password), granted membership in the `reader` role
+          reporting:
+            db_user: reporting
+            auth_plugin: AWSAuthenticationPlugin
+            role_memberships:
+              - reader
+            grants:
+              - grant: ["SELECT"]
+                db: example
 ```
 
 
@@ -68,13 +79,14 @@ components:
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0.0 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 4.0, < 6.0.0 |
 | <a name="requirement_mysql"></a> [mysql](#requirement\_mysql) | >= 3.0.22 |
+| <a name="requirement_utils"></a> [utils](#requirement\_utils) | >= 2.0.0, < 3.0.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 4.0, < 6.0.0 |
-| <a name="provider_mysql"></a> [mysql](#provider\_mysql) | >= 3.0.22 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.100.0 |
+| <a name="provider_mysql"></a> [mysql](#provider\_mysql) | 3.0.93 |
 
 ## Modules
 
@@ -82,7 +94,7 @@ components:
 |------|--------|---------|
 | <a name="module_additional_grants"></a> [additional\_grants](#module\_additional\_grants) | ./modules/mysql-user | n/a |
 | <a name="module_additional_users"></a> [additional\_users](#module\_additional\_users) | ./modules/mysql-user | n/a |
-| <a name="module_aurora_mysql"></a> [aurora\_mysql](#module\_aurora\_mysql) | cloudposse/stack-config/yaml//modules/remote-state | 1.8.0 |
+| <a name="module_aurora_mysql"></a> [aurora\_mysql](#module\_aurora\_mysql) | cloudposse/stack-config/yaml//modules/remote-state | 2.0.0 |
 | <a name="module_iam_roles"></a> [iam\_roles](#module\_iam\_roles) | ../account-map/modules/iam-roles | n/a |
 | <a name="module_this"></a> [this](#module\_this) | cloudposse/label/null | 0.25.0 |
 
@@ -91,6 +103,8 @@ components:
 | Name | Type |
 |------|------|
 | [mysql_database.additional](https://registry.terraform.io/providers/petoju/mysql/latest/docs/resources/database) | resource |
+| [mysql_role.additional](https://registry.terraform.io/providers/petoju/mysql/latest/docs/resources/role) | resource |
+| [aws_ssm_parameter.admin_password](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ssm_parameter) | data source |
 | [aws_ssm_parameter.password](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ssm_parameter) | data source |
 
 ## Inputs
@@ -99,8 +113,9 @@ components:
 |------|-------------|------|---------|:--------:|
 | <a name="input_additional_databases"></a> [additional\_databases](#input\_additional\_databases) | Additional databases to be created with the cluster | `set(string)` | `[]` | no |
 | <a name="input_additional_grants"></a> [additional\_grants](#input\_additional\_grants) | Create additional database user with specified grants.<br/>If `var.ssm_password_source` is set, passwords will be retrieved from SSM parameter store,<br/>otherwise, passwords will be generated and stored in SSM parameter store under the service's key. | <pre>map(list(object({<br/>    grant : list(string)<br/>    db : string<br/>  })))</pre> | `{}` | no |
+| <a name="input_additional_roles"></a> [additional\_roles](#input\_additional\_roles) | MySQL roles to create. Roles are GRANT targets that can be granted to users via<br/>`additional_users[*].role_memberships`. Requires MySQL 8.0+. | `set(string)` | `[]` | no |
 | <a name="input_additional_tag_map"></a> [additional\_tag\_map](#input\_additional\_tag\_map) | Additional key-value pairs to add to each map in `tags_as_list_of_maps`. Not added to `tags` or `id`.<br/>This is for some rare cases where resources want additional configuration of tags<br/>and therefore take a list of maps with tag key, value, and additional configuration. | `map(string)` | `{}` | no |
-| <a name="input_additional_users"></a> [additional\_users](#input\_additional\_users) | Create additional database user for a service, specifying username, grants, and optional password.<br/>If no password is specified, one will be generated. Username and password will be stored in<br/>SSM parameter store under the service's key. | <pre>map(object({<br/>    db_user : string<br/>    db_password : string<br/>    grants : list(object({<br/>      grant : list(string)<br/>      db : string<br/>    }))<br/>  }))</pre> | `{}` | no |
+| <a name="input_additional_users"></a> [additional\_users](#input\_additional\_users) | Create additional database user for a service, specifying username, grants, and optional password.<br/>If no password is specified, one will be generated. Username and password will be stored in<br/>SSM parameter store under the service's key.<br/>Set `auth_plugin` (e.g. `AWSAuthenticationPlugin` for RDS IAM authentication) to create a user<br/>that authenticates via a MySQL authentication plugin instead of a password; no password is<br/>generated or stored for such users. `role_memberships` grants the listed MySQL roles (see<br/>`var.additional_roles`) to the user. | <pre>map(object({<br/>    db_user : string<br/>    db_password : optional(string, "")<br/>    auth_plugin : optional(string, "")<br/>    role_memberships : optional(list(string), [])<br/>    grants : optional(list(object({<br/>      grant : list(string)<br/>      db : string<br/>    })), [])<br/>  }))</pre> | `{}` | no |
 | <a name="input_attributes"></a> [attributes](#input\_attributes) | ID element. Additional attributes (e.g. `workers` or `cluster`) to add to `id`,<br/>in the order they appear in the list. New attributes are appended to the<br/>end of the list. The elements of the list are joined by the `delimiter`<br/>and treated as a single ID element. | `list(string)` | `[]` | no |
 | <a name="input_aurora_mysql_component_name"></a> [aurora\_mysql\_component\_name](#input\_aurora\_mysql\_component\_name) | Aurora MySQL component name to read the remote state from | `string` | `"aurora-mysql"` | no |
 | <a name="input_context"></a> [context](#input\_context) | Single object for setting entire context at once.<br/>See description of individual variables for details.<br/>Leave string and numeric variables as `null` to use default value.<br/>Individual variable settings (non-null) override settings in context object,<br/>except for attributes, tags, and additional\_tag\_map, which are merged. | `any` | <pre>{<br/>  "additional_tag_map": {},<br/>  "attributes": [],<br/>  "delimiter": null,<br/>  "descriptor_formats": {},<br/>  "enabled": true,<br/>  "environment": null,<br/>  "id_length_limit": null,<br/>  "label_key_case": null,<br/>  "label_order": [],<br/>  "label_value_case": null,<br/>  "labels_as_tags": [<br/>    "unset"<br/>  ],<br/>  "name": null,<br/>  "namespace": null,<br/>  "regex_replace_chars": null,<br/>  "stage": null,<br/>  "tags": {},<br/>  "tenant": null<br/>}</pre> | no |
@@ -113,6 +128,7 @@ components:
 | <a name="input_label_order"></a> [label\_order](#input\_label\_order) | The order in which the labels (ID elements) appear in the `id`.<br/>Defaults to ["namespace", "environment", "stage", "name", "attributes"].<br/>You can omit any of the 6 labels ("tenant" is the 6th), but at least one must be present. | `list(string)` | `null` | no |
 | <a name="input_label_value_case"></a> [label\_value\_case](#input\_label\_value\_case) | Controls the letter case of ID elements (labels) as included in `id`,<br/>set as tag values, and output by this module individually.<br/>Does not affect values of tags passed in via the `tags` input.<br/>Possible values: `lower`, `title`, `upper` and `none` (no transformation).<br/>Set this to `title` and set `delimiter` to `""` to yield Pascal Case IDs.<br/>Default value: `lower`. | `string` | `null` | no |
 | <a name="input_labels_as_tags"></a> [labels\_as\_tags](#input\_labels\_as\_tags) | Set of labels (ID elements) to include as tags in the `tags` output.<br/>Default is to include all labels.<br/>Tags with empty values will not be included in the `tags` output.<br/>Set to `[]` to suppress all generated tags.<br/>**Notes:**<br/>  The value of the `name` tag, if included, will be the `id`, not the `name`.<br/>  Unlike other `null-label` inputs, the initial setting of `labels_as_tags` cannot be<br/>  changed in later chained modules. Attempts to change it will be silently ignored. | `set(string)` | <pre>[<br/>  "default"<br/>]</pre> | no |
+| <a name="input_mysql_admin_password"></a> [mysql\_admin\_password](#input\_mysql\_admin\_password) | MySQL password for the admin user. If not provided, the password will be pulled from SSM | `string` | `""` | no |
 | <a name="input_mysql_cluster_enabled"></a> [mysql\_cluster\_enabled](#input\_mysql\_cluster\_enabled) | Set to `false` to prevent the module from creating any resources | `string` | `true` | no |
 | <a name="input_name"></a> [name](#input\_name) | ID element. Usually the component or solution name, e.g. 'app' or 'jenkins'.<br/>This is the only ID element not also included as a `tag`.<br/>The "name" tag is set to the full `id` string. There is no tag with the value of the `name` input. | `string` | `null` | no |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | ID element. Usually an abbreviation of your organization name, e.g. 'eg' or 'cp', to help ensure generated IDs are globally unique | `string` | `null` | no |

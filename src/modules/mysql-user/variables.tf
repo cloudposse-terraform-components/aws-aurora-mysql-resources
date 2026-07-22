@@ -46,3 +46,19 @@ variable "kms_key_id" {
   default     = "alias/aws/rds"
   description = "KMS key ID, ARN, or alias to use for encrypting MySQL database"
 }
+
+variable "auth_plugin" {
+  type        = string
+  default     = ""
+  description = <<-EOT
+    MySQL authentication plugin for the user (e.g. `AWSAuthenticationPlugin` for RDS IAM
+    authentication). When set, the user authenticates via the plugin and no password is
+    generated or stored in SSM.
+    EOT
+}
+
+variable "role_memberships" {
+  type        = list(string)
+  default     = []
+  description = "List of MySQL roles to grant to the user created by this module."
+}

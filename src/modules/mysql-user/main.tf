@@ -1,10 +1,14 @@
 locals {
   enabled = module.this.enabled
 
+  # Password machinery applies only to password-authenticated users. Users with an
+  # `auth_plugin` set (e.g. RDS IAM auth) have no password to generate or store.
+  use_password = local.enabled && var.auth_plugin == ""
+
   db_user     = length(var.db_user) > 0 ? var.db_user : var.service_name
   db_password = length(var.db_password) > 0 ? var.db_password : join("", random_password.db_password[*].result)
 
-  save_password_in_ssm = local.enabled && var.save_password_in_ssm
+  save_password_in_ssm = local.use_password && var.save_password_in_ssm
 
   db_password_key = format("%s/%s/passwords/%s", var.ssm_path_prefix, var.service_name, local.db_user)
   db_password_ssm = local.save_password_in_ssm ? {
@@ -36,7 +40,7 @@ locals {
 }
 
 resource "random_password" "db_password" {
-  count   = local.enabled && length(var.db_password) == 0 ? 1 : 0
+  count   = local.use_password && length(var.db_password) == 0 ? 1 : 0
   length  = 33
   special = false
 
@@ -46,10 +50,23 @@ resource "random_password" "db_password" {
 }
 
 resource "mysql_user" "default" {
-  count              = local.enabled ? 1 : 0
-  user               = local.db_user
-  host               = "%"
-  plaintext_password = local.db_password
+  count = local.enabled ? 1 : 0
+  user  = local.db_user
+  host  = "%"
+  # Password users set `plaintext_password`; auth-plugin users (e.g. RDS IAM) set `auth_plugin`
+  # instead and have no password.
+  plaintext_password = var.auth_plugin == "" ? local.db_password : null
+  auth_plugin        = var.auth_plugin == "" ? null : var.auth_plugin
+}
+
+# Grant MySQL role memberships to the user (GRANT <role> TO <user>).
+resource "mysql_grant" "role_membership" {
+  count = local.enabled && length(var.role_memberships) > 0 ? 1 : 0
+  user  = join("", mysql_user.default[*].user)
+  host  = join("", mysql_user.default[*].host)
+  roles = var.role_memberships
+
+  depends_on = [mysql_user.default]
 }
 
 # Grant the user full access to this specific database
