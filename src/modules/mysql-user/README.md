@@ -5,45 +5,41 @@
 
 
 
+
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 <!-- markdownlint-disable -->
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0.0 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 4.0, < 6.0.0 |
 | <a name="requirement_mysql"></a> [mysql](#requirement\_mysql) | >= 3.0.22 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | >= 2.2 |
 
-## Providers
-
-| Name | Version |
-|------|---------|
-| <a name="provider_mysql"></a> [mysql](#provider\_mysql) | >= 3.0.22 |
-| <a name="provider_random"></a> [random](#provider\_random) | >= 2.2 |
-
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
+| ---- | ------ | ------- |
 | <a name="module_parameter_store_write"></a> [parameter\_store\_write](#module\_parameter\_store\_write) | cloudposse/ssm-parameter-store/aws | 0.13.0 |
 | <a name="module_this"></a> [this](#module\_this) | cloudposse/label/null | 0.25.0 |
 
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [mysql_grant.default](https://registry.terraform.io/providers/petoju/mysql/latest/docs/resources/grant) | resource |
+| [mysql_grant.role_membership](https://registry.terraform.io/providers/petoju/mysql/latest/docs/resources/grant) | resource |
 | [mysql_user.default](https://registry.terraform.io/providers/petoju/mysql/latest/docs/resources/user) | resource |
 | [random_password.db_password](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_additional_tag_map"></a> [additional\_tag\_map](#input\_additional\_tag\_map) | Additional key-value pairs to add to each map in `tags_as_list_of_maps`. Not added to `tags` or `id`.<br/>This is for some rare cases where resources want additional configuration of tags<br/>and therefore take a list of maps with tag key, value, and additional configuration. | `map(string)` | `{}` | no |
 | <a name="input_attributes"></a> [attributes](#input\_attributes) | ID element. Additional attributes (e.g. `workers` or `cluster`) to add to `id`,<br/>in the order they appear in the list. New attributes are appended to the<br/>end of the list. The elements of the list are joined by the `delimiter`<br/>and treated as a single ID element. | `list(string)` | `[]` | no |
+| <a name="input_auth_plugin"></a> [auth\_plugin](#input\_auth\_plugin) | MySQL authentication plugin for the user (e.g. `AWSAuthenticationPlugin` for RDS IAM<br/>authentication). When set, the user authenticates via the plugin and no password is<br/>generated or stored in SSM. | `string` | `""` | no |
 | <a name="input_context"></a> [context](#input\_context) | Single object for setting entire context at once.<br/>See description of individual variables for details.<br/>Leave string and numeric variables as `null` to use default value.<br/>Individual variable settings (non-null) override settings in context object,<br/>except for attributes, tags, and additional\_tag\_map, which are merged. | `any` | <pre>{<br/>  "additional_tag_map": {},<br/>  "attributes": [],<br/>  "delimiter": null,<br/>  "descriptor_formats": {},<br/>  "enabled": true,<br/>  "environment": null,<br/>  "id_length_limit": null,<br/>  "label_key_case": null,<br/>  "label_order": [],<br/>  "label_value_case": null,<br/>  "labels_as_tags": [<br/>    "unset"<br/>  ],<br/>  "name": null,<br/>  "namespace": null,<br/>  "regex_replace_chars": null,<br/>  "stage": null,<br/>  "tags": {},<br/>  "tenant": null<br/>}</pre> | no |
 | <a name="input_db_password"></a> [db\_password](#input\_db\_password) | MySQL password for the admin user (generated if not provided) | `string` | `""` | no |
 | <a name="input_db_user"></a> [db\_user](#input\_db\_user) | MySQL admin user name (default is service name) | `string` | `""` | no |
@@ -61,6 +57,7 @@
 | <a name="input_name"></a> [name](#input\_name) | ID element. Usually the component or solution name, e.g. 'app' or 'jenkins'.<br/>This is the only ID element not also included as a `tag`.<br/>The "name" tag is set to the full `id` string. There is no tag with the value of the `name` input. | `string` | `null` | no |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | ID element. Usually an abbreviation of your organization name, e.g. 'eg' or 'cp', to help ensure generated IDs are globally unique | `string` | `null` | no |
 | <a name="input_regex_replace_chars"></a> [regex\_replace\_chars](#input\_regex\_replace\_chars) | Terraform regular expression (regex) string.<br/>Characters matching the regex will be removed from the ID elements.<br/>If not set, `"/[^a-zA-Z0-9-]/"` is used to remove all characters other than hyphens, letters and digits. | `string` | `null` | no |
+| <a name="input_role_memberships"></a> [role\_memberships](#input\_role\_memberships) | List of MySQL roles to grant to the user created by this module. | `list(string)` | `[]` | no |
 | <a name="input_save_password_in_ssm"></a> [save\_password\_in\_ssm](#input\_save\_password\_in\_ssm) | If true, DB user's password will be stored in SSM | `bool` | `true` | no |
 | <a name="input_service_name"></a> [service\_name](#input\_service\_name) | Name of service owning the database (used in SSM key) | `string` | n/a | yes |
 | <a name="input_ssm_path_prefix"></a> [ssm\_path\_prefix](#input\_ssm\_path\_prefix) | SSM path prefix | `string` | `"rds"` | no |
@@ -71,12 +68,13 @@
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_db_user"></a> [db\_user](#output\_db\_user) | DB user name |
 | <a name="output_notice"></a> [notice](#output\_notice) | Note to user |
 | <a name="output_password_ssm_key"></a> [password\_ssm\_key](#output\_password\_ssm\_key) | SSM key under which user password is stored |
 <!-- markdownlint-restore -->
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+
 
 
 
