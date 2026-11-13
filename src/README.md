@@ -75,33 +75,26 @@ components:
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0.0 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 4.0, < 6.0.0 |
 | <a name="requirement_mysql"></a> [mysql](#requirement\_mysql) | >= 3.0.22 |
 | <a name="requirement_utils"></a> [utils](#requirement\_utils) | >= 2.0.0, < 3.0.0 |
 
-## Providers
-
-| Name | Version |
-|------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.100.0 |
-| <a name="provider_mysql"></a> [mysql](#provider\_mysql) | 3.0.93 |
-
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
+| ---- | ------ | ------- |
 | <a name="module_additional_grants"></a> [additional\_grants](#module\_additional\_grants) | ./modules/mysql-user | n/a |
 | <a name="module_additional_users"></a> [additional\_users](#module\_additional\_users) | ./modules/mysql-user | n/a |
-| <a name="module_aurora_mysql"></a> [aurora\_mysql](#module\_aurora\_mysql) | cloudposse/stack-config/yaml//modules/remote-state | 2.0.0 |
+| <a name="module_aurora_mysql"></a> [aurora\_mysql](#module\_aurora\_mysql) | cloudposse/stack-config/yaml//modules/remote-state | 2.0.1 |
 | <a name="module_iam_roles"></a> [iam\_roles](#module\_iam\_roles) | ../account-map/modules/iam-roles | n/a |
 | <a name="module_this"></a> [this](#module\_this) | cloudposse/label/null | 0.25.0 |
 
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [mysql_database.additional](https://registry.terraform.io/providers/petoju/mysql/latest/docs/resources/database) | resource |
 | [mysql_role.additional](https://registry.terraform.io/providers/petoju/mysql/latest/docs/resources/role) | resource |
 | [aws_ssm_parameter.admin_password](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ssm_parameter) | data source |
@@ -110,7 +103,7 @@ components:
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_additional_databases"></a> [additional\_databases](#input\_additional\_databases) | Additional databases to be created with the cluster | `set(string)` | `[]` | no |
 | <a name="input_additional_grants"></a> [additional\_grants](#input\_additional\_grants) | Create additional database user with specified grants.<br/>If `var.ssm_password_source` is set, passwords will be retrieved from SSM parameter store,<br/>otherwise, passwords will be generated and stored in SSM parameter store under the service's key. | <pre>map(list(object({<br/>    grant : list(string)<br/>    db : string<br/>  })))</pre> | `{}` | no |
 | <a name="input_additional_roles"></a> [additional\_roles](#input\_additional\_roles) | MySQL roles to create. Roles are GRANT targets that can be granted to users via<br/>`additional_users[*].role_memberships`. Requires MySQL 8.0+. | `set(string)` | `[]` | no |
@@ -144,7 +137,7 @@ components:
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_additional_grants"></a> [additional\_grants](#output\_additional\_grants) | Additional DB users created |
 | <a name="output_additional_users"></a> [additional\_users](#output\_additional\_users) | Additional DB users created |
 <!-- markdownlint-restore -->
